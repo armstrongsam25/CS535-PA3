@@ -18,43 +18,11 @@
       <Platform>x64</Platform>
     </ProjectConfiguration>
   </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="Bed.h" />
-    <ClInclude Include="Dresser.h" />
-    <ClInclude Include="Fan.h" />
-    <ClInclude Include="ImportedModel.h" />
-    <ClInclude Include="Lamp.h" />
-    <ClInclude Include="Rug.h" />
-    <ClInclude Include="SideTable.h" />
-    <ClInclude Include="Torus.h" />
-    <ClInclude Include="Utils.h" />
-    <ClInclude Include="Vector3f.h" />
-    <ClInclude Include="WallsFloor.h" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClCompile Include="Bed.cpp" />
-    <ClCompile Include="Dresser.cpp" />
-    <ClCompile Include="Fan.cpp" />
-    <ClCompile Include="ImportedModel.cpp" />
-    <ClCompile Include="Lamp.cpp" />
-    <ClCompile Include="main.cpp" />
-    <ClCompile Include="Rug.cpp" />
-    <ClCompile Include="SideTable.cpp" />
-    <ClCompile Include="Torus.cpp" />
-    <ClCompile Include="Utils.cpp" />
-    <ClCompile Include="WallsFloor.cpp" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="frag1Shader.glsl" />
-    <None Include="frag2Shader.glsl" />
-    <None Include="vert1Shader.glsl" />
-    <None Include="vert2Shader.glsl" />
-  </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>17.0</VCProjectVersion>
     <Keyword>Win32Proj</Keyword>
-    <ProjectGuid>{6dd0a8ea-5d6b-421f-9094-15bb0c6860e1}</ProjectGuid>
-    <RootNamespace>PA3</RootNamespace>
+    <ProjectGuid>{3c7aa722-de23-4017-8e80-6656238b227c}</ProjectGuid>
+    <RootNamespace>PA3__old_</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
@@ -168,6 +136,18 @@
       <AdditionalDependencies>glfw3.lib;glew32.lib;soil2-debug.lib;opengl32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
+  <ItemGroup>
+    <None Include="fragShader.glsl" />
+    <None Include="raytraceComputeShader.glsl" />
+    <None Include="vertShader.glsl" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="main.cpp" />
+    <ClCompile Include="Utils.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Utils.h" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

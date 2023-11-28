@@ -44,44 +44,4 @@ public:
 	static float* bronzeDiffuse();
 	static float* bronzeSpecular();
 	static float bronzeShininess();
-
-	static float* brownAmbient();
-	static float* brownDiffuse();
-	static float* brownSpecular();
-	static float brownShininess();
-
-	static float* blueAmbient();
-	static float* blueDiffuse();
-	static float* blueSpecular();
-	static float blueShininess();
-
-	static float* blackAmbient();
-	static float* blackDiffuse();
-	static float* blackSpecular();
-	static float blackShininess();
-
-	static float* yellowAmbient();
-	static float* yellowDiffuse();
-	static float* yellowSpecular();
-	static float yellowShininess();
-
-	static float* whiteAmbient();
-	static float* whiteDiffuse();
-	static float* whiteSpecular();
-	static float whiteShininess();
-
-	static float* redAmbient();
-	static float* redDiffuse();
-	static float* redSpecular();
-	static float redShininess();
-
-	static float* grayAmbient();
-	static float* grayDiffuse();
-	static float* graySpecular();
-	static float grayShininess();
-
-	static float* greenAmbient();
-	static float* greenDiffuse();
-	static float* greenSpecular();
-	static float greenShininess();
 };
