@@ -34,7 +34,7 @@ GLuint screenQuadShader, raytraceComputeShader;
 GLuint marbleTexture;
 
 void init(GLFWwindow* window) {
-	Utils::displayComputeShaderLimits();
+	//Utils::displayComputeShaderLimits();
 
 	// Allocate the memory for the screen texture, and wipe its contacts
 	screenTexture = (unsigned char*)malloc(sizeof(unsigned char) * 4 * RAYTRACE_RENDER_WIDTH * RAYTRACE_RENDER_HEIGHT);

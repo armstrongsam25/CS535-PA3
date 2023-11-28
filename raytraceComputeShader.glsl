@@ -56,7 +56,7 @@ Object[] objects =
 	   vec4(0.5, 0.5, 0.5, 1.0), vec4(1,1,1,1), vec4(1,1,1,1), 50.0
 	},
 	// slightly reflective pyramid with texture
-	{ 6, 0.0, vec3(-0.25, -0.8, -0.25), vec3(0.25, 0.8, 0.25), 0.0, 0.0, 0.0, vec3(0.0, 0.0, 2.0),
+	{ 6, 0.0, vec3(-0.25, -0.8, -0.25), vec3(0.25, 0.8, 0.25), 45.0, 0.0, 0.0, vec3(0.0, 0.0, 2.0),
 	   false, false, true, true, vec3(0), 0.5, 0.0, 0.0, 
 	   vec4(0.5, 0.5, 0.5, 1.0), vec4(1,1,1,1), vec4(1,1,1,1), 50.0
 	},
@@ -349,8 +349,8 @@ Collision intersect_pyramid_object(Ray r, Object o)
 
 	// Checking which boundary the intersection lies on
 	int face_index = 0;
-	//if(intersect_distance == plane_intersect_distances.y) face_index = 1;
-	 if(intersect_distance == plane_intersect_distances.z) face_index = 2;
+	if(intersect_distance == plane_intersect_distances.y) face_index = 1;
+	if(intersect_distance == plane_intersect_distances.z) face_index = 2;
 	
 	// Creating the collision normal
 	c.n = vec3(0.0);
@@ -366,14 +366,14 @@ Collision intersect_pyramid_object(Ray r, Object o)
 	c.p = r.start + c.t * r.dir;
 	
 	// Compute texture coordinates
-	// start by computing position in box space that ray collides
+	// start by computing position in pyramid space that ray collides
 	vec3 cp = (world_to_localTR * vec4(c.p,1.0)).xyz;
-	// now compute largest box dimension
+	// now compute largest pyramid dimension
 	float totalWidth = (o.maxs).x - (o.mins).x;
 	float totalHeight = (o.maxs).y - (o.mins).y;
 	float totalDepth = (o.maxs).z - (o.mins).z;
 	float maxDimension = max(totalWidth, max(totalHeight, totalDepth));
-	// finally, select tex coordinates depending on box face
+	// finally, select tex coordinates depending on pyramid face
 	float rayStrikeX = (cp.x + totalWidth/2.0)/maxDimension;
 	float rayStrikeY = (cp.y + totalHeight/2.0)/maxDimension;
 	float rayStrikeZ = (cp.z + totalDepth/2.0)/maxDimension;
