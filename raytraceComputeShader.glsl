@@ -37,7 +37,7 @@ struct Object
 Object[] objects =
 {	// object #0 is the room box
 	{ 0, 0.0, vec3(-20, -20, -20), vec3( 20, 20, 20), 0, 0, 0, vec3(0),
-		true, false, true, false, vec3(0.25, 1.0, 1.0), 0, 0, 0,
+		true, false, true, false, vec3(0.0, 0.0, 1.0), 0, 0, 0,
 		vec4(0.2, 0.2, 0.2, 1.0), vec4(0.9, 0.9, 0.9, 1.0), vec4(1,1,1,1), 50.0
 	},
 	// checkerboard ground plane
@@ -56,22 +56,22 @@ Object[] objects =
 	   vec4(0.5, 0.5, 0.5, 1.0), vec4(1,1,1,1), vec4(1,1,1,1), 50.0
 	},
 	// slightly reflective pyramid with texture
-	{ 6, 0.0, vec3(-0.25, -0.8, -0.25), vec3(0.25, 0.8, 0.25), 45.0, 0.0, 0.0, vec3(0.0, 0.0, 2.0),
+	{ 6, 0.0, vec3(-0.25, -0.8, -0.25), vec3(0.25, 0.8, 0.25), 45.0, 0.0, 0.0, vec3(0.0, 0.0, -2.0),
 	   false, false, true, true, vec3(0), 0.5, 0.0, 0.0, 
 	   vec4(0.5, 0.5, 0.5, 1.0), vec4(1,1,1,1), vec4(1,1,1,1), 50.0
 	},
-	/*// cylinder
-	{ 4, 0.5, vec3(0.0, 0.1, 0.0), vec3(0.0, 1.1, 0.0), 0, 0, 0, vec3(-2.0, 0.0, 1.0),
-	   false, false, true, true, vec3(0,0,0), 0.8, 0.8, 1.5, 
+	// cylinder
+	{ 4, 0.5, vec3(0.0, -1.0, 0.0), vec3(0.0, 1.0, 0.0), 0, 0, 0, vec3(-2.0, 0.0, -2.0),
+	   true, false, false, false, vec3(1,1,1), 0.0, 0.0, 0.0, 
 	   vec4(0.5, 0.5, 0.5, 1.0), vec4(1,1,1,1), vec4(1,1,1,1), 50.0
 	},
-	// cone
+	/*// cone
 	{ 5, 0.5, vec3(0.1, 0.1, 0.1), vec3(0.5, 0.5, 0.5), 0, 0, 0, vec3(0.0, 0.0, 1.0),
 	   false, false, true, true, vec3(0,0,0), 0.8, 0.8, 1.5, 
 	   vec4(0.5, 0.5, 0.5, 1.0), vec4(1,1,1,1), vec4(1,1,1,1), 50.0
 	}*/
 };
-int numObjects = 5;
+int numObjects = 6;
 float camera_pos = 4.0;
 const int max_depth = 4;
 const int stack_size = 100;
@@ -535,6 +535,10 @@ Collision intersect_sphere_object(Ray r, Object o)
 //------------------------------------------------------------------------------
 Collision intersect_cylinder_object(Ray ray, Object cylinder)
 {	Collision col;
+	mat4 local_to_worldT = buildTranslate((cylinder.position).x, (cylinder.position).y, (cylinder.position).z);
+	mat4 local_to_worldR =
+		buildRotateY(DEG_TO_RAD*cylinder.yrot) * buildRotateX(DEG_TO_RAD*cylinder.xrot) * buildRotateZ(DEG_TO_RAD*cylinder.zrot);
+	mat4 local_to_worldTR = local_to_worldT * local_to_worldR;
 
     // Cylinder parameters
     float radius = cylinder.radius;
@@ -557,12 +561,6 @@ Collision intersect_cylinder_object(Ray ray, Object cylinder)
     float t1 = (-b - sqrt(discriminant)) / (2.0 * a);
     float t2 = (-b + sqrt(discriminant)) / (2.0 * a);
 
-    if (t1 > t2) {
-        float temp = t1;
-        t1 = t2;
-        t2 = temp;
-    }
-
     // Check intersection with the caps
     float tCap1 = (cylinder.mins.y - ray.start.y) / ray.dir.y;
     float tCap2 = (cylinder.maxs.y - ray.start.y) / ray.dir.y;
@@ -584,19 +582,22 @@ Collision intersect_cylinder_object(Ray ray, Object cylinder)
         vec3 intersectPoint = ray.start + t1 * ray.dir;
         if (intersectPoint.y >= cylinder.mins.y && intersectPoint.y <= cylinder.maxs.y) {
             col.t = t1;
-        }
+        } else {
+			col.t = -1.0;
+		}
     }
 
-    if (tCap1 > 0.0 && tCap1 < col.t && distance(p1.xz, cylinderStart.xz) <= radius) {
+    /*if (tCap1 > 0.0 && tCap1 < col.t && distance(p1.xz, cylinderStart.xz) <= radius) {
         col.t = tCap1;
     }
 
     if (tCap2 > 0.0 && tCap2 < col.t && distance(p2.xz, cylinderStart.xz) <= radius) {
         col.t = tCap2;
-    }
+    }*/
 
     col.p = ray.start + col.t * ray.dir;
     col.n = normalize(col.p - cylinderStart - axis * dot(col.p - cylinderStart, axis));
+	//col.n = transpose(inverse(mat3(local_to_worldTR))) * col.n;
      // Calculate texture coordinates
     vec3 p = col.p - cylinderStart; // Position relative to cylinder start
 
