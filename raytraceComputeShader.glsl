@@ -55,11 +55,6 @@ Object[] objects =
 	   false, false, true, true, vec3(0), 0.5, 0.0, 0.0, 
 	   vec4(0.5, 0.5, 0.5, 1.0), vec4(1,1,1,1), vec4(1,1,1,1), 50.0
 	},
-	// slightly reflective ellipsiod with texture
-	{ 6, 0.5, vec3(0.0, -1.0, 0.0), vec3(0.0, 1.0, 0.0), 0, 0, 0, vec3(0.0, 0.0, -4.0),
-	   true, false, false, false, vec3(1,1,1), 0.0, 0.0, 0.0, 
-	   vec4(0.5, 0.5, 0.5, 1.0), vec4(1,1,1,1), vec4(1,1,1,1), 50.0
-	},
 	// cylinder
 	{ 4, 0.5, vec3(0.0, -1.0, 0.0), vec3(0.0, 1.0, 0.0), 0, 0, 0, vec3(2.0, 0.0, -2.0),
 	   true, false, false, false, vec3(0,1,0), 0.0, 0.0, 0.0, 
@@ -68,6 +63,11 @@ Object[] objects =
 	// cone
 	{ 5, 0.5, vec3(0.0, 0.0, 0.0), vec3(0.0, 1.0, 0.0), 0, 0, 0, vec3(-4.0, -0.5, -2.0),
 	   true, false, false, false, vec3(1,0,0), 0.0, 0.0, 0.0, 
+	   vec4(0.5, 0.5, 0.5, 1.0), vec4(1,1,1,1), vec4(1,1,1,1), 50.0
+	},
+	// ellipsoid
+	{ 6, 0.5, vec3(0.0, -1.0, 0.0), vec3(0.0, 1.0, 0.0), 0, 0, 0, vec3(0.0, 0.0, 2.0),
+	   true, false, false, false, vec3(1,1,1), 0.0, 0.0, 0.0, 
 	   vec4(0.5, 0.5, 0.5, 1.0), vec4(1,1,1,1), vec4(1,1,1,1), 50.0
 	}
 };
@@ -302,90 +302,61 @@ Collision intersect_box_object(Ray r, Object o)
 // Checks if Ray r intersects the Ellipsoid defined by Object o.ellipsoid
 //------------------------------------------------------------------------------
 Collision intersect_ellipsoid_object(Ray r, Object o)
-{	// Compute the ellipsoid's local-space to world-space transform matrices, and their inverse
-	mat4 local_to_worldT = buildTranslate((o.position).x, (o.position).y, (o.position).z);
-	mat4 local_to_worldR =
-		buildRotateY(DEG_TO_RAD*o.yrot) * buildRotateX(DEG_TO_RAD*o.xrot) * buildRotateZ(DEG_TO_RAD*o.zrot);
-	mat4 local_to_worldTR = local_to_worldT * local_to_worldR;
-	mat4 world_to_localTR = inverse(local_to_worldTR);
-	mat4 world_to_localR = inverse(local_to_worldR);
-
-	// Convert the world-space ray to the ellipsoid's local space:
-	vec3 ray_start = (world_to_localTR * vec4(r.start,1.0)).xyz;
-	vec3 ray_dir = (world_to_localR * vec4(r.dir,1.0)).xyz;
+{
 	
-	// Calculate the ellipsoid's world mins and maxs:
-	vec3 t_min = (o.mins - ray_start) / ray_dir;
-	vec3 t_max = (o.maxs - ray_start) / ray_dir;
-	vec3 t_minDist = min(t_min, t_max);
-	vec3 t_maxDist = max(t_min, t_max);
-	float t_near = max(max(t_minDist.x, t_minDist.y), t_minDist.z);
-	float t_far = min(min(t_maxDist.x, t_maxDist.y), t_maxDist.z);
+	float k = 0.2;
+	vec3 v = vec3(0.0, 0.2, 0.0);
+	vec3 x = ((o.maxs - o.mins)/2);
+	// 4*r*r*D|D - 4*k*k*(D|V)^2
+    float qa = 4 * pow(o.radius, 2) * dot(r.dir, r.dir) - 4*pow(k, 2)*pow(dot(r.dir, v), 2);
+	// 2*(4*r*r*D|X - 2*(D|V)*k * (r*r+2*X|V*k-k))
+	float qb = 2*(4*pow(o.radius, 2)*dot(r.dir, x) - 2*(dot(r.dir, v))*k * (pow(o.radius, 2) + 2*dot(x,v)*k - k));
+	// 4*r*r*X|X - (r*r+2*X|V*k-k)^2
+	float qc = 4*pow(o.radius, 2)*dot(x, x) - pow(pow(o.radius, 2)+2*dot(x,v)*k - k,2);
+
+	// Solving for qa * t^2 + qb * t + qc = 0
+	float qd = qb * qb - 4 * qa * qc;
 
 	Collision c;
-	c.t = t_near;
 	c.inside = false;
 
-	// If the ray is entering the ellipsoid, t_near contains the farthest boundary of entry
-	// If the ray is leaving the ellipsoid, t_far contains the closest boundary of exit
-	// The ray intersects the ellipsoid if and only if t_near < t_far, and if t_far > 0.0
-	
-	// If the ray didn't intersect the box, return a negative t value
-	if(t_near >= t_far || t_far <= 0.0)
+	if(qd < 0.0)	// no solution in this case
 	{	c.t = -1.0;
 		return c;
 	}
 
-	float intersect_distance = t_near;
-	vec3 plane_intersect_distances = t_minDist;
+	float t1 = (-qb + sqrt(qd)) / (2.0 * qa);
+	float t2 = (-qb - sqrt(qd)) / (2.0 * qa);
 
-	// if t_near < 0, then the ray started inside the box and left the box
-	if( t_near < 0.0)
+	float t_near = min(t1, t2);
+	float t_far = max(t1, t2);
+
+	c.t = t_near;
+
+	if(t_far < 0.0)		// sphere is behind the ray, no intersection
+	{	c.t = -1.0;
+		return c;
+	}
+
+	if(t_near < 0.0)	// the ray started inside the sphere
 	{	c.t = t_far;
-		intersect_distance = t_far;
-		plane_intersect_distances = t_maxDist;
 		c.inside = true;
 	}
 
-	// Checking which boundary the intersection lies on
-	int face_index = 0;
-	if(intersect_distance == plane_intersect_distances.y) face_index = 1;
-	if(intersect_distance == plane_intersect_distances.z) face_index = 2;
-	
-	// Creating the collision normal
-	c.n = vec3(0.0);
-	c.n[face_index] = 1.0;
+	c.p = r.start + c.t * r.dir;	// world position of the collision
+	c.n = normalize(c.p - o.position);	// use the world position to compute the surface normal
 
-	// If we hit the box from the negative axis, invert the normal
-	if(ray_dir[face_index] > 0.0) c.n *= -1.0;
+	if(c.inside)	// if collision is leaving the sphere, flip the normal
+	{	c.n *= -1.0;
+	}
 	
-	// now convert the normal back into world space
-	c.n = transpose(inverse(mat3(local_to_worldR))) * c.n;
-
-	// Calculate the world-position of the intersection:
-	c.p = r.start + c.t * r.dir;
+	// compute texture coordinates based on normal
+	(c.tc).x = 0.5 + atan(-(c.n).z,(c.n).x)/(2.0*PI);
+	(c.tc).y = 0.5 - asin(-(c.n).y)/PI;
 	
-	// Compute texture coordinates
-	// start by computing position in ellipsoid space that ray collides
-	vec3 cp = (world_to_localTR * vec4(c.p,1.0)).xyz;
-	// now compute largest ellipsoid dimension
-	float totalWidth = (o.maxs).x - (o.mins).x;
-	float totalHeight = (o.maxs).y - (o.mins).y;
-	float totalDepth = (o.maxs).z - (o.mins).z;
-	float maxDimension = max(totalWidth, max(totalHeight, totalDepth));
-	// finally, select tex coordinates depending on ellipsoid face
-	float rayStrikeX = (cp.x + totalWidth/2.0)/maxDimension;
-	float rayStrikeY = (cp.y + totalHeight/2.0)/maxDimension;
-	float rayStrikeZ = (cp.z + totalDepth/2.0)/maxDimension;
-	if (face_index == 0)
-		c.tc = vec2(rayStrikeZ, rayStrikeY);
-	else if (face_index == 1)
-		c.tc = vec2(rayStrikeZ, rayStrikeX);
-	else
-		c.tc = vec2(rayStrikeY, rayStrikeX);
-		
 	return c;
 }
+
 
 //------------------------------------------------------------------------------
 // Checks if Ray r intersects a Room Box defined by Object o.box
