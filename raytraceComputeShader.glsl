@@ -8,7 +8,7 @@ layout (binding=0, rgba8) uniform image2D output_texture;
 layout (binding=1) uniform sampler2D sampMarble;
 
 struct Object
-{	int       type;            // 0=roombox, 1=sphere, 2=box, 3=plane, 4=cylinder, 5=cone, 6=pyramid
+{	int       type;            // 0=roombox, 1=sphere, 2=box, 3=plane, 4=cylinder, 5=cone, 6=ellipsoid
 	float     radius;          // if type=sphere
 	vec3      mins;            // if type=box or plane or cylinder (if plane, X and Z values are width and depth)
 	vec3      maxs;            // if type=box or cylinder
@@ -46,32 +46,32 @@ Object[] objects =
 	   vec4(0.2, 0.2, 0.2, 1.0), vec4(0.9, 0.9, 0.9, 1.0), vec4(1,1,1,1), 50.0
 	},
 	// transparent sphere with slight reflection and no texture
-	{ 1, 1.2, vec3(0), vec3(0), 0, 0, 0, vec3(2.0, 0.2, 0.0),
+	{ 1, 1.2, vec3(0), vec3(0), 0, 0, 0, vec3(4.0, 0.2, -2.0),
 	   false, false, true, true, vec3(0,0,0), 0.8, 0.8, 1.5, 
 	   vec4(0.5, 0.5, 0.5, 1.0), vec4(1,1,1,1), vec4(1,1,1,1), 50.0
 	},
 	// slightly reflective box with texture
-	{ 2, 0.0, vec3(-0.25, -0.8, -0.25), vec3(0.25, 0.8, 0.25), 0.0, 70.0, 0.0, vec3(-2.0, -0.2, 0.0),
+	{ 2, 0.0, vec3(-0.25, -0.8, -0.25), vec3(0.25, 0.8, 0.25), 0.0, 70.0, 0.0, vec3(-2.0, -0.2, -2.0),
 	   false, false, true, true, vec3(0), 0.5, 0.0, 0.0, 
 	   vec4(0.5, 0.5, 0.5, 1.0), vec4(1,1,1,1), vec4(1,1,1,1), 50.0
 	},
-	// slightly reflective pyramid with texture
-	{ 6, 0.0, vec3(-0.25, -0.8, -0.25), vec3(0.25, 0.8, 0.25), 45.0, 0.0, 0.0, vec3(0.0, 0.0, -2.0),
-	   false, false, true, true, vec3(0), 0.5, 0.0, 0.0, 
-	   vec4(0.5, 0.5, 0.5, 1.0), vec4(1,1,1,1), vec4(1,1,1,1), 50.0
-	},
-	// cylinder
-	{ 4, 0.5, vec3(0.0, -1.0, 0.0), vec3(0.0, 1.0, 0.0), 0, 0, 0, vec3(-2.0, 0.0, -2.0),
+	// slightly reflective ellipsiod with texture
+	{ 6, 0.5, vec3(0.0, -1.0, 0.0), vec3(0.0, 1.0, 0.0), 0, 0, 0, vec3(0.0, 0.0, -4.0),
 	   true, false, false, false, vec3(1,1,1), 0.0, 0.0, 0.0, 
 	   vec4(0.5, 0.5, 0.5, 1.0), vec4(1,1,1,1), vec4(1,1,1,1), 50.0
 	},
-	/*// cone
-	{ 5, 0.5, vec3(0.1, 0.1, 0.1), vec3(0.5, 0.5, 0.5), 0, 0, 0, vec3(0.0, 0.0, 1.0),
-	   false, false, true, true, vec3(0,0,0), 0.8, 0.8, 1.5, 
+	// cylinder
+	{ 4, 0.5, vec3(0.0, -1.0, 0.0), vec3(0.0, 1.0, 0.0), 0, 0, 0, vec3(2.0, 0.0, -2.0),
+	   true, false, false, false, vec3(0,1,0), 0.0, 0.0, 0.0, 
 	   vec4(0.5, 0.5, 0.5, 1.0), vec4(1,1,1,1), vec4(1,1,1,1), 50.0
-	}*/
+	},
+	// cone
+	{ 5, 0.5, vec3(0.0, 0.0, 0.0), vec3(0.0, 1.0, 0.0), 0, 0, 0, vec3(-4.0, -0.5, -2.0),
+	   true, false, false, false, vec3(1,0,0), 0.0, 0.0, 0.0, 
+	   vec4(0.5, 0.5, 0.5, 1.0), vec4(1,1,1,1), vec4(1,1,1,1), 50.0
+	}
 };
-int numObjects = 6;
+int numObjects = 7;
 float camera_pos = 4.0;
 const int max_depth = 4;
 const int stack_size = 100;
@@ -299,10 +299,10 @@ Collision intersect_box_object(Ray r, Object o)
 }
 
 //------------------------------------------------------------------------------
-// Checks if Ray r intersects the Pyramid defined by Object o.pyramid
+// Checks if Ray r intersects the Ellipsoid defined by Object o.ellipsoid
 //------------------------------------------------------------------------------
-Collision intersect_pyramid_object(Ray r, Object o)
-{	// Compute the pyramid's local-space to world-space transform matrices, and their inverse
+Collision intersect_ellipsoid_object(Ray r, Object o)
+{	// Compute the ellipsoid's local-space to world-space transform matrices, and their inverse
 	mat4 local_to_worldT = buildTranslate((o.position).x, (o.position).y, (o.position).z);
 	mat4 local_to_worldR =
 		buildRotateY(DEG_TO_RAD*o.yrot) * buildRotateX(DEG_TO_RAD*o.xrot) * buildRotateZ(DEG_TO_RAD*o.zrot);
@@ -310,11 +310,11 @@ Collision intersect_pyramid_object(Ray r, Object o)
 	mat4 world_to_localTR = inverse(local_to_worldTR);
 	mat4 world_to_localR = inverse(local_to_worldR);
 
-	// Convert the world-space ray to the pyramid's local space:
+	// Convert the world-space ray to the ellipsoid's local space:
 	vec3 ray_start = (world_to_localTR * vec4(r.start,1.0)).xyz;
 	vec3 ray_dir = (world_to_localR * vec4(r.dir,1.0)).xyz;
 	
-	// Calculate the pyramid's world mins and maxs:
+	// Calculate the ellipsoid's world mins and maxs:
 	vec3 t_min = (o.mins - ray_start) / ray_dir;
 	vec3 t_max = (o.maxs - ray_start) / ray_dir;
 	vec3 t_minDist = min(t_min, t_max);
@@ -326,9 +326,9 @@ Collision intersect_pyramid_object(Ray r, Object o)
 	c.t = t_near;
 	c.inside = false;
 
-	// If the ray is entering the pyramid, t_near contains the farthest boundary of entry
-	// If the ray is leaving the pyramid, t_far contains the closest boundary of exit
-	// The ray intersects the pyramid if and only if t_near < t_far, and if t_far > 0.0
+	// If the ray is entering the ellipsoid, t_near contains the farthest boundary of entry
+	// If the ray is leaving the ellipsoid, t_far contains the closest boundary of exit
+	// The ray intersects the ellipsoid if and only if t_near < t_far, and if t_far > 0.0
 	
 	// If the ray didn't intersect the box, return a negative t value
 	if(t_near >= t_far || t_far <= 0.0)
@@ -366,14 +366,14 @@ Collision intersect_pyramid_object(Ray r, Object o)
 	c.p = r.start + c.t * r.dir;
 	
 	// Compute texture coordinates
-	// start by computing position in pyramid space that ray collides
+	// start by computing position in ellipsoid space that ray collides
 	vec3 cp = (world_to_localTR * vec4(c.p,1.0)).xyz;
-	// now compute largest pyramid dimension
+	// now compute largest ellipsoid dimension
 	float totalWidth = (o.maxs).x - (o.mins).x;
 	float totalHeight = (o.maxs).y - (o.mins).y;
 	float totalDepth = (o.maxs).z - (o.mins).z;
 	float maxDimension = max(totalWidth, max(totalHeight, totalDepth));
-	// finally, select tex coordinates depending on pyramid face
+	// finally, select tex coordinates depending on ellipsoid face
 	float rayStrikeX = (cp.x + totalWidth/2.0)/maxDimension;
 	float rayStrikeY = (cp.y + totalHeight/2.0)/maxDimension;
 	float rayStrikeZ = (cp.z + totalDepth/2.0)/maxDimension;
@@ -587,17 +587,8 @@ Collision intersect_cylinder_object(Ray ray, Object cylinder)
 		}
     }
 
-    /*if (tCap1 > 0.0 && tCap1 < col.t && distance(p1.xz, cylinderStart.xz) <= radius) {
-        col.t = tCap1;
-    }
-
-    if (tCap2 > 0.0 && tCap2 < col.t && distance(p2.xz, cylinderStart.xz) <= radius) {
-        col.t = tCap2;
-    }*/
-
     col.p = ray.start + col.t * ray.dir;
     col.n = normalize(col.p - cylinderStart - axis * dot(col.p - cylinderStart, axis));
-	//col.n = transpose(inverse(mat3(local_to_worldTR))) * col.n;
      // Calculate texture coordinates
     vec3 p = col.p - cylinderStart; // Position relative to cylinder start
 
@@ -628,57 +619,74 @@ Collision intersect_cylinder_object(Ray ray, Object cylinder)
 
 //------------------------------------------------------------------------------
 // Checks if Ray r intersects the Cone defined by Object cone
+// 
 //------------------------------------------------------------------------------
-Collision intersect_cone_object(Ray r, Object o)
-{
-	Collision collision;
-
-    // Cone parameters
-    float height = o.maxs.y - o.mins.y;
-    float radius = o.radius;
-
-    // Ray parameters
-    vec3 ro = r.start - o.position;
-    vec3 rd = r.dir;
-
-    float k = radius / height;
-    k = k * k;
-
-    float a = rd.x * rd.x + rd.z * rd.z - k * rd.y * rd.y;
-    float b = 2.0 * (ro.x * rd.x + ro.z * rd.z - k * ro.y * rd.y);
-    float c = ro.x * ro.x + ro.z * ro.z - k * ro.y * ro.y;
-
+Collision intersect_cone_object(Ray ray, Object cone) {
+    float cosTheta = cos(radians(45.0)); // Angle of rotation in radians
+    float sinTheta = sin(radians(45.0));
+    
+    Collision collision;
+    
+    // Translate ray to cone's local coordinate system
+    vec3 rayStartLocal = ray.start - cone.position;
+    vec3 rayDirLocal = normalize(ray.dir);
+    
+    // Rotate ray direction by the inverse of cone rotation
+    rayDirLocal = mat3(1) * rayDirLocal;
+    
+    // Cone intersection formula
+    float a = rayDirLocal.x * rayDirLocal.x - rayDirLocal.y * rayDirLocal.y + rayDirLocal.z * rayDirLocal.z;
+    float b = 2.0 * (rayStartLocal.x * rayDirLocal.x - rayStartLocal.y * rayDirLocal.y + rayStartLocal.z * rayDirLocal.z);
+    float c = rayStartLocal.x * rayStartLocal.x - rayStartLocal.y * rayStartLocal.y + rayStartLocal.z * rayStartLocal.z;
+    
     float discriminant = b * b - 4.0 * a * c;
-
-    if (discriminant >= 0.0) {
-        float t0 = (-b - sqrt(discriminant)) / (2.0 * a);
-        float t1 = (-b + sqrt(discriminant)) / (2.0 * a);
-
-        // Checking the validity of intersections
-        float ymin = o.mins.y;
-        float ymax = o.maxs.y;
-        float y0 = ro.y + t0 * rd.y;
-        float y1 = ro.y + t1 * rd.y;
-
-        if (t0 > 0 && y0 >= ymin && y0 <= ymax) {
-            collision.t = t0;
-            collision.p = r.start + t0 * r.dir;
-            collision.n = vec3((collision.p.x - o.position.x) / radius, 0.0, (collision.p.z - o.position.z) / radius);
-            collision.inside = (y0 < ymin || y0 > ymax);
-            // Calculate texture coordinates if needed
-            // collision.tc = /* calculate texture coordinates */;
-        } else if (t1 > 0 && y1 >= ymin && y1 <= ymax) {
-            collision.t = t1;
-            collision.p = r.start + t1 * r.dir;
-            collision.n = vec3((collision.p.x - o.position.x) / radius, 0.0, (collision.p.z - o.position.z) / radius);
-            collision.inside = (y1 < ymin || y1 > ymax);
-            // Calculate texture coordinates if needed
-            // collision.tc = /* calculate texture coordinates */;
-        }
+    
+    if (discriminant < 0.0) {
+        // No intersection
+        collision.t = -1.0;
+        return collision;
     }
-
+    
+    float sqrtDiscriminant = sqrt(discriminant);
+    float t1 = (-b + sqrtDiscriminant) / (2.0 * a);
+    float t2 = (-b - sqrtDiscriminant) / (2.0 * a);
+    
+    float t = min(t1, t2);
+    
+    if (t < 0.0) {
+        // Intersection behind the ray
+        collision.t = -1.0;
+        return collision;
+    }
+    
+    // Calculate collision information
+    vec3 intersectionPoint = ray.start + ray.dir * t;
+    float height = intersectionPoint.y - cone.position.y;
+    float radiusAtHeight = height * tan(radians(45.0)); // Radius of the cone at intersection height
+    
+	// this is close
+    if (intersectionPoint.y > cone.position.y && intersectionPoint.y < cone.maxs.y + 100000) {
+        // Intersection point is above or below the cone or outside the cone's lateral surface
+        collision.t = -1.0;
+        return collision;
+    }
+	
+    
+    vec3 normal = normalize(vec3(intersectionPoint.x, -intersectionPoint.y, intersectionPoint.z));
+    
+    // Transform intersection point and normal back to world space
+    intersectionPoint = intersectionPoint + cone.position;
+    normal = normalize(mat3(1) * normal);
+    
+    collision.t = t;
+    collision.p = intersectionPoint;
+    collision.n = normal;
+    collision.inside = false; // Not considering inside of the cone
+    collision.object_index = cone.type;
+    
     return collision;
 }
+
 
 //------------------------------------------------------------------------------
 // Returns the closest collision of a ray
@@ -719,7 +727,7 @@ Collision get_closest_collision(Ray r)
 			if (c.t <= 0) continue;
 		}
 		else if (objects[i].type == 6)
-		{	c = intersect_pyramid_object(r, objects[i]);
+		{	c = intersect_ellipsoid_object(r, objects[i]);
 			if (c.t <= 0) continue;
 		}
 		else continue;
