@@ -32,7 +32,7 @@ struct Object
 	float     shininess;       // ADS shininess material characteristic
 };
 
-
+vec3 fanPos = vec3(0.0, 0.0, 0.0);
 // objects for example 1 (reflective box, transparent sphere, checkerboard plane)
 Object[] objects =
 {	// object #0 is the room box
@@ -45,23 +45,23 @@ Object[] objects =
 	   false, true, false, false, vec3(0), 0.0, 0.0, 0.0, 
 	   vec4(0.2, 0.2, 0.2, 1.0), vec4(0.9, 0.9, 0.9, 1.0), vec4(1,1,1,1), 50.0
 	},
-	// transparent sphere with slight reflection and no texture
-	{ 1, 1.2, vec3(0), vec3(0), 0, 0, 0, vec3(4.0, 0.2, -2.0),
+	// sphere
+	{ 1, 0.5, vec3(0), vec3(0), 0, 0, 0, vec3(2.0, 0.2, -1.0),
 	   false, false, true, true, vec3(0,0,0), 0.8, 0.8, 1.5, 
 	   vec4(0.5, 0.5, 0.5, 1.0), vec4(1,1,1,1), vec4(1,1,1,1), 50.0
 	},
-	// slightly reflective box with texture
-	{ 2, 0.0, vec3(-0.25, -0.8, -0.25), vec3(0.25, 0.8, 0.25), 0.0, 70.0, 0.0, vec3(-2.0, -0.2, -2.0),
-	   false, false, true, true, vec3(0), 0.5, 0.0, 0.0, 
+	// box
+	{ 2, 0.0, vec3(-1.0, -0.8, -0.1), vec3(1.0, 0.8, 0.1), 0.0, 20.0, 0.0, vec3(-1.0, -0.2, -1.0),
+	   false, false, true, true, vec3(0), 0.1, 0.9, 0.7, 
 	   vec4(0.5, 0.5, 0.5, 1.0), vec4(1,1,1,1), vec4(1,1,1,1), 50.0
 	},
 	// cylinder
-	{ 4, 0.5, vec3(0.0, -1.0, 0.0), vec3(0.0, 1.0, 0.0), 0, 0, 0, vec3(2.0, 0.0, -2.0),
+	{ 4, 0.5, vec3(0.0, -1.0, 0.0), vec3(0.0, 1.0, 0.0), 0, 0, 0, vec3(1.0, 0.0, -2.0),
 	   true, false, false, false, vec3(0,1,0), 0.0, 0.0, 0.0, 
 	   vec4(0.5, 0.5, 0.5, 1.0), vec4(1,1,1,1), vec4(1,1,1,1), 50.0
 	},
 	// cone
-	{ 5, 0.5, vec3(0.0, 0.0, 0.0), vec3(0.0, 1.0, 0.0), 0, 0, 0, vec3(-4.0, -0.5, -2.0),
+	{ 5, 0.5, vec3(0.0, 0.0, 0.0), vec3(0.0, 1.0, 0.0), 0, 0, 0, vec3(-2.0, -0.5, -2.0),
 	   true, false, false, false, vec3(1,0,0), 0.0, 0.0, 0.0, 
 	   vec4(0.5, 0.5, 0.5, 1.0), vec4(1,1,1,1), vec4(1,1,1,1), 50.0
 	},
@@ -69,13 +69,45 @@ Object[] objects =
 	{ 6, 0.5, vec3(0.0, -1.0, 0.0), vec3(0.0, 1.0, 0.0), 0, 0, 0, vec3(0.0, 0.0, 2.0),
 	   true, false, false, false, vec3(1,1,1), 0.0, 0.0, 0.0, 
 	   vec4(0.5, 0.5, 0.5, 1.0), vec4(1,1,1,1), vec4(1,1,1,1), 50.0
-	}
+	},
+	// base of fan
+	{ 4, 0.5, vec3(0.0, -0.95, 0.0), vec3(0.0, -0.9, 0.0), 0, 0, 0, vec3(fanPos.x, fanPos.y, fanPos.z),
+	   true, false, false, false, vec3(0.9,0.9,0.9), 0.0, 0.0, 0.0, 
+	   vec4(0.5, 0.5, 0.5, 1.0), vec4(1,1,1,1), vec4(1,1,1,1), 50.0
+	},
+	// stem of fan
+	{ 4, 0.05, vec3(0.0, -0.9, 0.0), vec3(0.0, 0.4, 0.0), 0, 0, 0, vec3(fanPos.x, fanPos.y, fanPos.z),
+	   true, false, false, false, vec3(0.9,0.9,0.9), 0.0, 0.0, 0.0, 
+	   vec4(0.5, 0.5, 0.5, 1.0), vec4(1,1,1,1), vec4(1,1,1,1), 50.0
+	},
+	// motor of fan
+	{ 1, 0.1, vec3(0), vec3(0), 0, 0, 0, vec3(fanPos.x, fanPos.y+0.45, fanPos.z),
+	   true, false, false, false, vec3(0.9,0.9,0.9),0.0, 0.0, 0.0, 
+	   vec4(0.5, 0.5, 0.5, 1.0), vec4(1,1,1,1), vec4(1,1,1,1), 50.0
+	},
+	// fan blade 1
+	{ 2, 0.0, vec3(-0.05, -0.25, -0.05), vec3(0.05, 0.25, 0.05), 0.0, 0.0, 0.0, vec3(fanPos.x, fanPos.y+0.75, fanPos.z+0.1),
+	   true, false, false, false, vec3(1.0,0,0),0.0, 0.0, 0.0,
+	   vec4(0.5, 0.5, 0.5, 1.0), vec4(1,1,1,1), vec4(1,1,1,1), 50.0
+	},
+	// fan blade 2
+	{ 2, 0.0, vec3(-0.05, -0.25, -0.05), vec3(0.05, 0.25, 0.05), 0.0, 0.0, 240.0, vec3(fanPos.x+0.25, fanPos.y+0.3, fanPos.z+0.1),
+	   true, false, false, false, vec3(1.0,0,0),0.0, 0.0, 0.0,
+	   vec4(0.5, 0.5, 0.5, 1.0), vec4(1,1,1,1), vec4(1,1,1,1), 50.0
+	},
+	// fan blade 3
+	{ 2, 0.0, vec3(-0.05, -0.25, -0.05), vec3(0.05, 0.25, 0.05), 0.0, 0.0, 120.0, vec3(fanPos.x-0.25, fanPos.y+0.3, fanPos.z+0.1),
+	   true, false, false, false, vec3(1.0,0,0),0.0, 0.0, 0.0,
+	   vec4(0.5, 0.5, 0.5, 1.0), vec4(1,1,1,1), vec4(1,1,1,1), 50.0
+	},
 };
-int numObjects = 7;
-float camera_pos = 4.0;
+// set fanPos above this array
+int numObjects = 13;
+float camera_pos = 2.0;
 const int max_depth = 4;
 const int stack_size = 100;
 vec3 pointLight_position = vec3(-3.0, 4.0, 3.5);
+vec3 pointLight1_position = vec3(3.0, 4.0, 3.5);
 	   
 struct Ray
 {	vec3 start;	// origin of the ray
@@ -564,8 +596,8 @@ Collision intersect_cylinder_object(Ray ray, Object cylinder)
     vec3 p = col.p - cylinderStart; // Position relative to cylinder start
 
     float theta = atan(p.x, p.z); // Calculate angle around the cylinder
-    float u = theta / (2.0 * PI); // Map angle to [0, 1] range for u-coordinate
 
+    float u = theta / (2.0 * PI); // Map angle to [0, 1] range for u-coordinate
     float v = (p.y - cylinder.mins.y) / (cylinder.maxs.y - cylinder.mins.y); // Map height to [0, 1] range for v-coordinate
 
     col.tc = vec2(u, v);
@@ -725,22 +757,26 @@ vec3 ads_phong_lighting(Ray r, Collision c)
 
 	// Check to see if any object is casting a shadow on this surface
 	Ray light_ray;
+	Ray light_ray1;
 	light_ray.start = c.p + c.n * 0.01;
 	light_ray.dir = normalize(pointLight_position - c.p);
+	light_ray1.start = c.p + c.n * 0.01;
+	light_ray1.dir = normalize(pointLight1_position - c.p);
 	bool in_shadow = false;
 
 	// Cast the ray against the scene
 	Collision c_shadow = get_closest_collision(light_ray);
+	Collision c_shadow1 = get_closest_collision(light_ray1);
 
 	// If the ray hit an object and if the hit occurred between the surface and the light
-	if((c_shadow.object_index != -1) && c_shadow.t < length(pointLight_position - c.p))
+	if((c_shadow.object_index != -1) && (c_shadow.t < length(pointLight_position - c.p) || c_shadow1.t < length(pointLight1_position - c.p)))
 	{	in_shadow = true;
 	}
 
 	// If this surface is in shadow, don't add diffuse and specular components
 	if (in_shadow == false)	// comment out this line to disable shadows
 	{	// Computing the light's reflection on the surface
-		vec3 light_dir = normalize(pointLight_position - c.p);
+		vec3 light_dir = normalize((pointLight_position + pointLight1_position) - c.p);
 		vec3 light_ref = normalize(reflect(-light_dir, c.n));
 		float cos_theta = dot(light_dir, c.n);
 		float cos_phi = dot(normalize(-r.dir), light_ref);
